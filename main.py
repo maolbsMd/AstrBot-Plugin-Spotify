@@ -101,7 +101,7 @@ class SpotifyController(Star):
     # ================= Bot 自主调用的 LLM Tools =================
 
     @llm_tool(name="search_spotify")
-    async def search_spotify(self, keyword: str = "", q: str = "") -> str:
+    async def search_spotify(self, event: AstrMessageEvent, keyword: str = "", q: str = "") -> str:
         """
         当你需要为用户点歌、播放音乐时，必须优先调用此工具搜索。
         参数 keyword: 需要搜索的歌名或歌手名。
@@ -133,7 +133,7 @@ class SpotifyController(Star):
             return f"搜索失败：{str(e)}"
 
     @llm_tool(name="play_spotify")
-    async def play_spotify(self, uri: str) -> str:
+    async def play_spotify(self, event: AstrMessageEvent, uri: str) -> str:
         """
         播放指定的 Spotify 歌曲。
         参数 uri: 必须是标准格式，例如 'spotify:track:xxxxxx'。
@@ -152,7 +152,7 @@ class SpotifyController(Star):
             return f"播放时发生未知错误：{str(e)}"
 
     @llm_tool(name="pause_spotify")
-    async def pause_spotify(self) -> str:
+    async def pause_spotify(self, event: AstrMessageEvent) -> str:
         """用于暂停当前正在播放的音乐。"""
         if not self.sp:
             return "Spotify 未授权。"
@@ -163,7 +163,7 @@ class SpotifyController(Star):
             return f"暂停失败：{str(e)}"
 
     @llm_tool(name="next_track_spotify")
-    async def next_track_spotify(self) -> str:
+    async def next_track_spotify(self, event: AstrMessageEvent) -> str:
         """用于切换到下一首歌曲。"""
         if not self.sp:
             return "Spotify 未授权。"
@@ -174,7 +174,7 @@ class SpotifyController(Star):
             return f"切歌失败：{str(e)}"
 
     @llm_tool(name="previous_track_spotify")
-    async def previous_track_spotify(self) -> str:
+    async def previous_track_spotify(self, event: AstrMessageEvent) -> str:
         """用于切换到上一首歌曲。"""
         if not self.sp:
             return "Spotify 未授权。"
@@ -185,7 +185,7 @@ class SpotifyController(Star):
             return f"切换失败：{str(e)}"
 
     @llm_tool(name="save_track_spotify")
-    async def save_track_spotify(self, uri: str) -> str:
+    async def save_track_spotify(self, event: AstrMessageEvent, uri: str) -> str:
         """
         当你需要把某首歌曲收藏、保存或添加到'喜欢的音乐'时调用此工具。
         参数 uri: 必须是标准格式，例如 'spotify:track:xxxxxx'。
