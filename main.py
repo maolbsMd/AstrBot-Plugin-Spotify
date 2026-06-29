@@ -15,38 +15,32 @@ class SpotifyController(Star):
         # 初始化时加载一次配置
         self._load_config_and_init()
 
-    def _load_config_and_init(self):
-        """核心逻辑：从 WebUI 的正确数据目录实时加载配置"""
+def _load_config_and_init(self):
+        """核心逻辑：从插件目录实时加载 WebUI 保存的配置"""
         config = {}
         
-        # 使用 StarTools 指向 WebUI 真正保存配置的独立数据目录
-        data_dir = StarTools.get_data_dir()
-        config_path = os.path.join(data_dir, "config.json")
+        # 🌟 关键修正：WebUI 保存的配置就存放在当前代码同目录下，直接读它就行！
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
         
-        # 本地代码目录的兜底文件
-        fallback_path = os.path.join(os.path.dirname(__file__), "config.json")
-        
-        # 优先读取 WebUI 生成的配置，如果没有，再找源码目录下的
-        load_path = config_path if os.path.exists(config_path) else fallback_path
-        
-        if os.path.exists(load_path):
+        if os.path.exists(config_path):
             try:
-                with open(load_path, "r", encoding="utf-8") as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     config = json.load(f)
             except Exception:
                 pass
                 
-        client_id = config.get("client_id", "")
-        client_secret = config.get("client_secret", "")
-        redirect_uri = config.get("redirect_uri", "http://127.0.0.1:6198/callback")
+        # 🛡️ 加个 .strip()，防止你在 WebUI 复制粘贴时不小心多带了空格
+        client_id = config.get("client_id", "").strip()
+        client_secret = config.get("client_secret", "").strip()
+        redirect_uri = config.get("redirect_uri", "http://127.0.0.1:6198/callback").strip()
         
-        # 终极防呆：强制提取纯净的 URL，坚决不把带 Markdown 括号的错误链接传给 Spotify
+        # 终极防呆：强制提取纯净的 URL，过滤掉可能的 Markdown 括号
         if "[" in redirect_uri or "]" in redirect_uri:
             match = re.search(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+', redirect_uri)
             if match:
                 redirect_uri = match.group(0)
         
-        # 如果读取到的还是未修改的占位符，直接挂起等待配置
+        # 如果读取到的还是未修改的占位符或者为空，直接挂起等待配置
         if not client_id or not client_secret or client_id == "你的_CLIENT_ID" or client_id == "YOUR_SPOTIFY_CLIENT_ID":
             return
             
