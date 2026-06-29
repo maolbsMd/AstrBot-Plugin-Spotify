@@ -1,8 +1,8 @@
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from astrbot.api.all import *
+from astrbot.api.event import filter
 
-@register("spotify_controller", "YourName", "Spotify 智能点歌与控制插件", "1.0.0")
 class SpotifyController(Star):
     def __init__(self, context: Context, config: dict):
         super().__init__(context)
