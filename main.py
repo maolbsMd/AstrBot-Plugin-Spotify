@@ -10,7 +10,7 @@ class SpotifyController(Star):
         super().__init__(context)
         self.sp = None
         self.auth_manager = None
-        # 初始化时加载一次
+        # 初始化时加载一次配置
         self._load_config_and_init()
 
     def _load_config_and_init(self):
@@ -49,13 +49,12 @@ class SpotifyController(Star):
         else:
             self.sp = None
 
-
     # ================= 供人类用户使用的授权指令 =================
 
     @filter.command("spotify登录")
     async def spotify_login(self, event: AstrMessageEvent):
         """生成授权链接发给用户"""
-        # 🌟 关键：生成链接前重新加载配置，确保读取的是 WebUI 中最新保存的值
+        # 生成链接前重新加载配置，确保读取的是 WebUI 中最新保存的值
         self._load_config_and_init()
         
         if not self.auth_manager:
@@ -75,7 +74,6 @@ class SpotifyController(Star):
         )
         yield event.plain_result(msg)
 
-
     @filter.command("spotify授权")
     async def spotify_auth_callback(self, event: AstrMessageEvent, url: str):
         """接收用户的跳转链接并生成缓存"""
@@ -90,7 +88,7 @@ class SpotifyController(Star):
                 yield event.plain_result("授权失败：提取不到 code，请确保复制了完整的链接。")
                 return
                 
-            # 用 code 换取真实的 Token（内部会自动生成并保存 .cache 文件）
+            # 用 code 换取真实的 Token
             self.auth_manager.get_access_token(code)
             
             # 重新初始化 Spotify 客户端
@@ -100,17 +98,15 @@ class SpotifyController(Star):
         except Exception as e:
             yield event.plain_result(f"❌ 授权过程中出错：{str(e)}")
 
-
     # ================= Bot 自主调用的 LLM Tools =================
 
-   @llm_tool(name="search_spotify")
+    @llm_tool(name="search_spotify")
     async def search_spotify(self, keyword: str = "", q: str = "") -> str:
         """
         当你需要为用户点歌、播放音乐时，必须优先调用此工具搜索。
         参数 keyword: 需要搜索的歌名或歌手名。
         Bot 操作指南：请阅读返回的列表，自行判断哪一首最符合用户需求，提取该歌曲的 URI，然后立刻调用 play_spotify 工具播放它。
         """
-        # 兼容 LLM 可能不按套路出牌，错误传入 'q' 的情况
         search_query = keyword or q
         if not search_query:
             return "搜索失败：没有提供有效的搜索关键词。"
@@ -119,7 +115,6 @@ class SpotifyController(Star):
             return "Spotify 未授权，请提示用户先发送 /spotify登录 进行绑定。"
             
         try:
-            # 这里调用 Spotify API 时使用的是 search_query
             results = self.sp.search(q=search_query, limit=5, type='track')
             tracks = results['tracks']['items']
             
