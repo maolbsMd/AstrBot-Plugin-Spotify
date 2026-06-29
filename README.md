@@ -1,27 +1,89 @@
-# AstrBot-Plugin-Spotify 🎵
+# 🎸 AstrBot Spotify 智能控制插件 (astrbot_plugin_spotify)
 
-这是一个为 AstrBot 开发的 Spotify 智能点歌与控制插件。它赋予了你的 AI Agent 直接搜索音乐、控制设备播放、切歌以及收藏歌曲的能力，彻底解放双手，实现真正的自然语言点歌体验。
-
-**作者**: maolbsMd
-**版本**: 1.0.0
+这是一个为 [AstrBot](https://github.com/Soulter/AstrBot) 打造的 Spotify 智能交互插件。安装后，你可以直接用自然语言让大模型帮你搜索歌曲、控制播放、切歌、暂停，甚至将好听的歌一键加入你的 Spotify 收藏夹！
+或者让你的bot控制你的播放列表
 
 ---
 
-## ✨ 核心特性
+## ✨ 核心功能
 
-- **🧠 智能搜索与判断**：Bot 会根据用户的自然语言需求，自动搜索 Spotify 曲库，并挑选最匹配的歌曲进行播放。
-- **🎮 全面播放控制**：支持播放、暂停、上一首、下一首。
-- **❤️ 一键收藏**：遇到好听的歌，直接告诉 Bot “把这首歌加入收藏”，即可同步到你的 Spotify「已点赞的歌曲」。
-- **☁️ 云服务器友好**：内置手动授权流（Manual Auth Flow），完美适配无图形界面的 Linux 云服务器/Docker 容器部署，无需担心浏览器弹窗导致程序卡死。
+* 🔍 **智能搜索**：通过自然语言搜索 Spotify 曲库。
+* 🎵 **控制播放**：播放指定歌曲、暂停、上一首、下一首。
+* ❤️ **一键收藏**：遇到喜欢的音乐，直接让 Bot 帮你保存到“喜欢的音乐”列表。
+* 🤖 **完全融入 LLM**：无需死记硬背指令，直接对 Bot 说“帮我放一首周杰伦的晴天”、“切歌”、“这首歌挺好听的，帮我收藏一下”即可自动调用。
 
 ---
 
-## 🛠️ 安装与配置指南
+## 🛠️ 第一步：准备工作（获取 Spotify 密钥）
 
-### 第一步：获取 Spotify 开发者凭证
-1. 访问 [Spotify Developer Dashboard](https://developer.spotify.com/dashboard) 并登录你的 Spotify 账号（**必须是 Premium 高级会员账号**）。
-2. 点击右上角的 `Create app` 创建一个新应用。
-3. 填写基本信息后，进入该 App 的页面，点击 `Settings`。
-4. **【⚠️ 最重要的一步】** 找到 **Redirect URIs**，准确无误地填入以下地址并保存：
-   ```text
-   [http://127.0.0.1:6198/callback](http://127.0.0.1:6198/callback)
+由于 Spotify 的限制，你需要先在开发者后台创建一个免费的应用来获取 API 密钥。**请务必仔细阅读这一步，避免后续授权失败！**
+
+1. 登录 [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)。
+2. 点击右上角的 **Create app**。
+   * **App name / Description**: 随便填。
+   * **Redirect URIs (极其重要)**: 必须精确填写 `http://127.0.0.1:6198/callback` （千万不要带任何空格或多余字符），并点击 **Save** 保存。
+3. 进入你刚创建的 App，点击 **Settings**，找到 `Client ID` 和 `Client Secret`，将它们复制下来备用。
+4. **⚠️ 避坑必看 (开发者白名单)**：
+   新创建的 App 默认处于“开发模式”。你必须在 App 的 **User Management** 页面，手动添加你需要用来点歌的 Spotify 账号邮箱。**如果不加，最后一步授权时会报错 `server_error`！**
+
+---
+
+## 📦 第二步：安装与配置
+
+1. 将本插件文件夹 `astrbot_plugin_spotify` 放入 AstrBot 的 `data/plugins/` 目录下，或者通过Astrbot插件市场直接下载。
+2. 重启 AstrBot，进入 WebUI 管理面板。
+3. 在左侧菜单找到 **插件配置** -> 选择 `astrbot_plugin_spotify`。
+4. 填入你刚才获取的配置信息：
+   * `client_id`: 填入你的 Client ID
+   * `client_secret`: 填入你的 Client Secret
+   * `redirect_uri`: 保持默认的 `http://127.0.0.1:6198/callback`
+5. 点击保存设置。
+
+*(注：系统会自动过滤你复制时不小心带入的 Markdown 括号或多余空格，请放心填写。)*
+
+---
+
+## 🔑 第三步：首次授权流程（小白必看）
+
+由于本插件完全运行在你的本地/服务器容器中，首次使用需要进行一次手动授权连接：
+
+1. 在聊天窗口对 Bot 发送：`/spotify登录`
+2. Bot 会返回一条包含授权链接的消息，请在浏览器中点击打开该链接。
+3. 登录你的 Spotify 账号，并点击 **“同意授权” (Agree)**。
+4. **关键步骤**：授权完成后，网页会变成白屏并提示“无法访问此网站 / 拒绝连接”。**这是正常的！** 5. 请直接复制此时**浏览器地址栏里那一长串完整的链接**（它应该包含 `?code=xxxx`）。若后面没带token，请删除https://developer.spotify.com/dashboard里的app重新建立一个，并且把该打上的勾都打上。
+6. 回到聊天窗口，对 Bot 发送：`/spotify授权 <你复制的完整链接>`（有空格）
+7. 看到“✅ 授权成功”的提示后，即可开始使用！
+
+---
+
+## 🎧 日常使用指南
+
+### 1. 唤醒设备 (极其重要)
+Spotify API 有一个硬性规定：**只能控制当前正在活跃的设备**。
+如果你刚打开电脑或手机，请先**手动打开 Spotify 客户端，随便播放任意一首歌 1 秒钟**，然后再让 Bot 帮你切歌或点歌。如果没有活跃设备，Bot 会提示播放失败。
+
+### 2. 自然语言交互
+你不再需要输入繁琐的命令，直接和你的 Bot 聊天即可：
+* “放一首林俊杰的歌”
+* “帮我找一下《小幸运》，然后放出来”
+* “太吵了，暂停播放”
+* “切歌，换下一首”
+* “这首歌不错，帮我加到收藏夹里”
+
+### 3. 管理指令
+* `/spotify登录`：获取首次或重新授权的链接。
+* `/spotify授权 <url>`：提交浏览器返回的授权地址。
+
+---
+
+## 🐛 常见问题排查
+
+* **Q: 授权时浏览器地址栏出现 `error=server_error`？**
+  A: 你的 Spotify 账号邮箱没有加入开发者后台的 User Management 白名单。请前往添加后，重新发送 `/spotify登录` 获取新链接。
+* **Q: 授权时提示 `redirect_uri: Unsafe`？**
+  A: 请检查 WebUI 里的回调地址是否包含多余的字符。必须是纯净的 `http://127.0.0.1:6198/callback`。
+* **Q: 大模型提示“找不到活跃的 Spotify 设备”？**
+  A: 你的 Spotify 客户端太久没发声，休眠了。去手机或电脑上随便点开一首歌即可唤醒。
+
+---
+*Developed by maolbsMd | 开源让生活更美好*
