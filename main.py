@@ -1,17 +1,26 @@
+import os
+import json
 import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 from astrbot.api.all import *
 from astrbot.api.event import filter
 
 class SpotifyController(Star):
-    def __init__(self, context: Context, config: dict):
+    def __init__(self, context: Context):
         super().__init__(context)
+        
+        # 主动读取当前目录下的 config.json 文件
+        config = {}
+        config_path = os.path.join(os.path.dirname(__file__), "config.json")
+        if os.path.exists(config_path):
+            with open(config_path, "r", encoding="utf-8") as f:
+                config = json.load(f)
         
         # 1. 从用户自定义配置中读取 ID 和 Key
         self.client_id = config.get("client_id", "")
         self.client_secret = config.get("client_secret", "")
         
-        # 2. 回调地址使用 127.0.0.1 规避 localhost 解析限制，端口对齐 AstrBot 常见容器配置
+        # 2. 回调地址使用 127.0.0.1 规避 localhost 解析限制
         self.redirect_uri = config.get("redirect_uri", "http://127.0.0.1:6198/callback")
         
         self.sp = None
@@ -19,6 +28,7 @@ class SpotifyController(Star):
         self._init_spotify()
 
     def _init_spotify(self):
+        
         """初始化 Auth Manager，并尝试静默加载本地 Token"""
         if not self.client_id or not self.client_secret:
             return
