@@ -9,3 +9,18 @@ tags:
   - 娱乐
   - 工具
   - Spotify
+support_platforms:
+  - aiocqhttp
+  - qq_official
+  - qq_official_webhook
+  - telegram
+  - wecom
+  - discord
+  - lark
+  - dingtalk
+  - slack
+  - kook
+  - vocechat
+  - weixin_official_account
+  - weixin_oc
+astrbot_version: ">=4.25"
