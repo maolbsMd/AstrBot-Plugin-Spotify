@@ -6,16 +6,13 @@ from spotipy.oauth2 import SpotifyOAuth
 from astrbot.api.all import *
 from astrbot.api.event import filter
 
-# 重新启用 @register，这是让框架主动注入 WebUI 配置的钥匙
-@register("astrbot_plugin_spotify", "maolbsMd", "Spotify 智能点歌与控制插件", "1.0.0")
+@register("astrbot_plugin_spotify", "maolbsMd", "Spotify 智能点歌与控制插件", "1.0.1")
 class SpotifyController(Star):
-    # 增加 config: dict = None，既能接收 WebUI 配置，又能防止框架报错
     def __init__(self, context: Context, config: dict = None):
         super().__init__(context)
         self.sp = None
         self.auth_manager = None
         
-        # 🌟 核心破局点：优先吃下 WebUI 传过来的配置，如果没有，再兜底去读本地模板
         if config:
             self.config = config
         else:
@@ -65,7 +62,6 @@ class SpotifyController(Star):
     @filter.command("spotify登录")
     async def spotify_login(self, event: AstrMessageEvent):
         """生成授权链接发给用户"""
-        # 注意：这里去掉了之前冗余的 reload 步骤，因为 WebUI 保存时框架会自动重载整个插件
         if not self.auth_manager:
             yield event.plain_result("请先在 WebUI 面板中填入完整的 client_id 和 client_secret。")
             return
@@ -210,3 +206,25 @@ class SpotifyController(Star):
             return f"哎呀，收藏失败了，Spotify 报错：{str(e)}"
         except Exception as e:
             return f"执行收藏时发生未知错误：{str(e)}"
+
+    @llm_tool(name="add_to_queue_spotify")
+    async def add_to_queue_spotify(self, event: AstrMessageEvent, uri: str) -> str:
+        """
+        将指定的 Spotify 歌曲加入到播放列表（稍后播放/插队）。
+        参数 uri: 必须是标准格式，例如 'spotify:track:xxxxxx'。
+        Bot 操作指南：
+        - 如果用户说“直接放”、“切成这首”，请调用 play_spotify。
+        - 如果用户说“下一首放”、“加到列表”、“待会儿听这首”，请调用本工具（add_to_queue_spotify）。
+        """
+        if not self.sp:
+            return "Spotify 未授权，请提示用户先发送 /spotify登录 进行绑定。"
+            
+        try:
+            self.sp.add_to_queue(uri)
+            return "✅ 已成功将该歌曲加入播放队尾！"
+        except spotipy.exceptions.SpotifyException as e:
+            if "NO_ACTIVE_DEVICE" in str(e):
+                return "操作失败：没有找到活跃的 Spotify 设备。请提醒用户先在手机或电脑上打开 Spotify 播放任意一首歌来激活设备。"
+            return f"操作失败：Spotify 报错 {str(e)}"
+        except Exception as e:
+            return f"添加播放列表时发生未知错误：{str(e)}"
